@@ -443,11 +443,25 @@ const traverseVariables = (
     const previous = ((params.previousData || {})[key] || []) as Array<Params>
     const current = params.data[key] as Array<Params>
 
+    const maybeEnumList = findInputFieldForType(introspectionResults, currentType.name, PRISMA_SET)
+
+    if (maybeEnumList && maybeEnumList.kind === 'ENUM') {
+      return {
+        ...acc,
+        data: {
+          ...acc.data,
+          [key]: {
+            set: params.data[key]
+          }
+        }
+      }
+    }
+
     // Connect data with only ID field
     const fieldsToConnect = current.filter(f => f.hasOwnProperty('id') && Object.keys(f).length === 1)
 
     if (fieldsToConnect.length) {
-      const operation = currentType.inputFields.some(f => f.name === 'set') ? PRISMA_SET : PRISMA_CONNECT;
+      const operation = currentType.inputFields.some(f => f.name === PRISMA_SET) ? PRISMA_SET : PRISMA_CONNECT;
 
       return {
         ...acc,
